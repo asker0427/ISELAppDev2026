@@ -1,6 +1,1 @@
-{
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  }
-}
+{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"flutter":{"platforms":{"android":{"default":{"projectId":"calendar-todo-o2c30q","appId":"1:634982029029:android:7b03da1f44dd07ab55660c","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"calendar-todo-o2c30q","appId":"1:634982029029:ios:8e82a5285021c22655660c","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"calendar-todo-o2c30q","configurations":{"android":"1:634982029029:android:7b03da1f44dd07ab55660c","ios":"1:634982029029:ios:8e82a5285021c22655660c","web":"1:634982029029:web:af2c72551bf5153555660c"}}}}}}

@@ -12,7 +12,7 @@ class AppConfig {
 
   /// 使用する Gemini モデル名。
   static const String geminiModel =
-      String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-1.5-flash');
+      String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3-flash-preview');
 
   /// Gemini が利用可能か（キーが設定されているか）。
   static bool get isGeminiEnabled => geminiApiKey.isNotEmpty;
