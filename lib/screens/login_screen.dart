@@ -54,6 +54,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _error =
+  'メールアドレスを入力してください');
+      return;
+    }
+    try {
+      await ref.read(authServiceProvider).sendPasswordReset(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content:
+  Text('パスワードリセットメールを送信しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = AuthService.describeError(e));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -131,6 +151,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : Text(_isSignUp ? '登録する' : 'ログイン'),
                     ),
                     const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _loading ? null : _resetPassword,
+                      child: const
+                      Text('パスワードを忘れた方はこちら'),
+                    ),
                     TextButton(
                       onPressed: _loading
                           ? null
