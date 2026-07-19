@@ -109,22 +109,66 @@ class TaskController {
     return _fs.updateTask(task.copyWith(subtasks: updated));
   }
 
+  /// サブタスクを追加して保存する。
+  Future<void> addSubtask(Task task, String title) async {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return Future.value();
+
+    final updated = [...task.subtasks, SubTask(id: _genId(), title: trimmed)];
+
+    return _fs.updateTask(task.copyWith(subtasks: updated));
+  }
+
+  /// サブタスクのタイトルを更新して保存する。
+  Future<void> updateSubtask(Task task, String subtaskId, String title) {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return Future.value();
+
+    final updated = task.subtasks.map((subtask) {
+      return subtask.id == subtaskId
+          ? subtask.copyWith(title: trimmed)
+          : subtask;
+    }).toList();
+
+    return _fs.updateTask(task.copyWith(subtasks: updated));
+  }
+
+  /// サブタスクを削除して保存する。
+  Future<void> deleteSubtask(Task task, String subtaskId) {
+    final updated = task.subtasks.where((s) => s.id != subtaskId).toList();
+    return _fs.updateTask(task.copyWith(subtasks: updated));
+  }
+
+  /// サブタスクを並び替えて保存する。
+  Future<void> reorderSubtasks(Task task, int oldIndex, int newIndex) {
+    final updated = [...task.subtasks];
+    final moved = updated.removeAt(oldIndex);
+    updated.insert(newIndex, moved);
+    return _fs.updateTask(task.copyWith(subtasks: updated));
+  }
+
+  /// 優先度を変更する.
+  Future<void> updatePriority(Task task, TaskPriority priority) {
+    return _fs.updateTask(task.copyWith(priority: priority));
+  }
+
   /// Gemini でサブタスクを生成し、タスクに追加保存する。
   /// 戻り値は生成できた件数（0 なら未生成）。
   Future<int> generateSubtasks(Task task) async {
     final gemini = _ref.read(geminiServiceProvider);
     if (gemini == null) return 0;
-    final titles = await gemini.splitIntoSubtasks(task.title, notes: task.notes);
+    final titles = await gemini.splitIntoSubtasks(
+      task.title,
+      notes: task.notes,
+    );
     if (titles.isEmpty) return 0;
     final subtasks = [
-      for (final title in titles)
-        SubTask(id: _genId(), title: title),
+      for (final title in titles) SubTask(id: _genId(), title: title),
     ];
     await _fs.updateTask(task.copyWith(subtasks: subtasks));
     return subtasks.length;
   }
 
-  String _genId() =>
-      '${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
+  String _genId() => '${DateTime.now().microsecondsSinceEpoch}_${_counter++}';
   int _counter = 0;
 }

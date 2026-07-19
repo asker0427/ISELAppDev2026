@@ -30,13 +30,16 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     setState(() => _generating = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final count =
-          await ref.read(taskControllerProvider).generateSubtasks(task);
-      messenger.showSnackBar(SnackBar(
-        content: Text(count > 0
-            ? 'サブタスクを $count 件生成しました'
-            : 'サブタスクを生成できませんでした'),
-      ));
+      final count = await ref
+          .read(taskControllerProvider)
+          .generateSubtasks(task);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            count > 0 ? 'サブタスクを $count 件生成しました' : 'サブタスクを生成できませんでした',
+          ),
+        ),
+      );
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('生成に失敗しました: $e')));
     } finally {
@@ -54,7 +57,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       locale: const Locale('ja'),
     );
     if (picked != null) {
-      await ref.read(taskControllerProvider).update(task.copyWith(dueDate: picked));
+      await ref
+          .read(taskControllerProvider)
+          .update(task.copyWith(dueDate: picked));
     }
   }
 
@@ -67,17 +72,103 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         content: Text('「${task.title}」を削除しますか？'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('キャンセル')),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('削除')),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('削除'),
+          ),
         ],
       ),
     );
     if (ok == true) {
       await ref.read(taskControllerProvider).delete(task.id);
       navigator.pop();
+    }
+  }
+
+  Future<void> _showSubtaskDialog(
+    Task task, {
+    String? subtaskId,
+    String initialTitle = '',
+  }) async {
+    final textController = TextEditingController(text: initialTitle);
+    final isEditing = subtaskId != null;
+
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isEditing ? 'サブタスクを編集' : 'サブタスクを追加'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'サブタスク名',
+            border: OutlineInputBorder(),
+          ),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (value) {
+            final trimmed = value.trim();
+            if (trimmed.isNotEmpty) {
+              Navigator.of(dialogContext).pop(trimmed);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = textController.text.trim();
+              if (value.isNotEmpty) {
+                Navigator.of(dialogContext).pop(value);
+              }
+            },
+            child: Text(isEditing ? '変更' : '追加'),
+          ),
+        ],
+      ),
+    );
+
+    textController.dispose();
+    if (title == null || !mounted) return;
+
+    final controller = ref.read(taskControllerProvider);
+    if (subtaskId != null) {
+      await controller.updateSubtask(task, subtaskId, title);
+    } else {
+      await controller.addSubtask(task, title);
+    }
+  }
+
+  Future<void> _confirmDeleteSubtask(
+    Task task,
+    String subtaskId,
+    String title,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('サブタスクを削除'),
+        content: Text('「$title」を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(taskControllerProvider).deleteSubtask(task, subtaskId);
     }
   }
 
@@ -121,8 +212,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 child: Text(
                   task.title,
                   style: theme.textTheme.headlineSmall?.copyWith(
-                    decoration:
-                        task.done ? TextDecoration.lineThrough : null,
+                    decoration: task.done ? TextDecoration.lineThrough : null,
                   ),
                 ),
               ),
@@ -138,27 +228,62 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             children: [
               ActionChip(
                 avatar: const Icon(Icons.event, size: 18),
-                label: Text(task.dueDate == null
-                    ? '期限なし'
-                    : DateFormat('M月d日(E)', 'ja').format(task.dueDate!)),
+                label: Text(
+                  task.dueDate == null
+                      ? '期限なし'
+                      : DateFormat('M月d日(E)', 'ja').format(task.dueDate!),
+                ),
                 onPressed: () => _pickDue(task),
               ),
-              Chip(
-                avatar: const Icon(Icons.flag, size: 18),
-                label: Text('優先度: ${task.priority.label}'),
+              PopupMenuButton<TaskPriority>(
+                initialValue: task.priority,
+                tooltip: '優先度を変更',
+                onSelected: (priority) {
+                  controller.updatePriority(task, priority);
+                },
+                itemBuilder: (_) => TaskPriority.values.map((priority) {
+                  return PopupMenuItem(
+                    value: priority,
+                    child: Row(
+                      children: [
+                        if (priority == task.priority)
+                          const Icon(Icons.check, size: 18)
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 8),
+                        Text('優先度: ${priority.label}'),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                child: Chip(
+                  avatar: const Icon(Icons.flag, size: 18),
+                  label: Text('優先度: ${task.priority.label}'),
+                ),
               ),
             ],
           ),
           const Divider(height: 32),
           Row(
             children: [
-              Text('サブタスク',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'サブタスク',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const Spacer(),
               if (task.subtasks.isNotEmpty)
-                Text('${task.subtasks.where((s) => s.done).length}/${task.subtasks.length}',
-                    style: theme.textTheme.bodySmall),
+                Text(
+                  '${task.subtasks.where((s) => s.done).length}'
+                  '/${task.subtasks.length}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                tooltip: 'サブタスクを追加',
+                onPressed: () => _showSubtaskDialog(task),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -169,23 +294,79 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               onGenerate: () => _generateSubtasks(task),
             )
           else ...[
-            ...task.subtasks.map((s) => CheckboxListTile(
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: task.subtasks.length,
+              onReorderItem: (oldIndex, newIndex) =>
+                  controller.reorderSubtasks(task, oldIndex, newIndex),
+              itemBuilder: (context, index) {
+                final s = task.subtasks[index];
+                return CheckboxListTile(
+                  key: ValueKey(s.id),
                   contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
                   value: s.done,
                   title: Text(
                     s.title,
                     style: TextStyle(
-                      decoration:
-                          s.done ? TextDecoration.lineThrough : null,
+                      decoration: s.done ? TextDecoration.lineThrough : null,
                     ),
                   ),
                   onChanged: (_) => controller.toggleSubtask(task, s.id),
-                )),
+                  secondary: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PopupMenuButton<String>(
+                        tooltip: 'サブタスクを操作',
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              _showSubtaskDialog(
+                                task,
+                                subtaskId: s.id,
+                                initialTitle: s.title,
+                              );
+                              break;
+                            case 'delete':
+                              _confirmDeleteSubtask(task, s.id, s.title);
+                              break;
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: ListTile(
+                              leading: Icon(Icons.edit_outlined),
+                              title: Text('編集'),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: ListTile(
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('削除'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Icon(Icons.drag_handle),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 8),
             if (AppConfig.isGeminiEnabled)
               OutlinedButton.icon(
-                onPressed:
-                    _generating ? null : () => _generateSubtasks(task),
+                onPressed: _generating ? null : () => _generateSubtasks(task),
                 icon: _generating
                     ? const SizedBox(
                         height: 18,
@@ -219,19 +400,15 @@ class _NoSubtasks extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          Icon(Icons.auto_awesome,
-              color: theme.colorScheme.primary, size: 32),
+          Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 32),
           const SizedBox(height: 12),
           Text(
-            geminiEnabled
-                ? 'このタスクを AI で実行手順に分割できます'
-                : 'サブタスクはまだありません',
+            geminiEnabled ? 'このタスクを AI で実行手順に分割できます' : 'サブタスクはまだありません',
             textAlign: TextAlign.center,
           ),
           if (geminiEnabled) ...[
@@ -249,11 +426,13 @@ class _NoSubtasks extends StatelessWidget {
             ),
           ] else ...[
             const SizedBox(height: 8),
-            Text('GEMINI_API_KEY を設定すると利用できます（README 参照）',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                )),
+            Text(
+              'GEMINI_API_KEY を設定すると利用できます（README 参照）',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ],
       ),
