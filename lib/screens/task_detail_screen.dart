@@ -297,6 +297,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
               itemCount: task.subtasks.length,
               onReorderItem: (oldIndex, newIndex) =>
                   controller.reorderSubtasks(task, oldIndex, newIndex),
@@ -305,6 +306,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 return CheckboxListTile(
                   key: ValueKey(s.id),
                   contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
                   value: s.done,
                   title: Text(
                     s.title,
@@ -313,35 +315,47 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     ),
                   ),
                   onChanged: (_) => controller.toggleSubtask(task, s.id),
-                  secondary: PopupMenuButton<String>(
-                    tooltip: 'サブタスクを操作',
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'edit':
-                          _showSubtaskDialog(
-                            task,
-                            subtaskId: s.id,
-                            initialTitle: s.title,
-                          );
-                          break;
-                        case 'delete':
-                          _confirmDeleteSubtask(task, s.id, s.title);
-                          break;
-                      }
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: ListTile(
-                          leading: Icon(Icons.edit_outlined),
-                          title: Text('編集'),
-                        ),
+                  secondary: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PopupMenuButton<String>(
+                        tooltip: 'サブタスクを操作',
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              _showSubtaskDialog(
+                                task,
+                                subtaskId: s.id,
+                                initialTitle: s.title,
+                              );
+                              break;
+                            case 'delete':
+                              _confirmDeleteSubtask(task, s.id, s.title);
+                              break;
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: ListTile(
+                              leading: Icon(Icons.edit_outlined),
+                              title: Text('編集'),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: ListTile(
+                              leading: Icon(Icons.delete_outline),
+                              title: Text('削除'),
+                            ),
+                          ),
+                        ],
                       ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: ListTile(
-                          leading: Icon(Icons.delete_outline),
-                          title: Text('削除'),
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Icon(Icons.drag_handle),
                         ),
                       ),
                     ],
