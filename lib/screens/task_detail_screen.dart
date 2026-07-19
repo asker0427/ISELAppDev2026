@@ -93,24 +93,27 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     String? subtaskId,
     String initialTitle = '',
   }) async {
-    final textController = TextEditingController(text: initialTitle);
+    var inputTitle = initialTitle;
     final isEditing = subtaskId != null;
 
     final title = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(isEditing ? 'サブタスクを編集' : 'サブタスクを追加'),
-        content: TextField(
-          controller: textController,
+        content: TextFormField(
+          initialValue: initialTitle,
           autofocus: true,
           decoration: const InputDecoration(
             labelText: 'サブタスク名',
             border: OutlineInputBorder(),
           ),
           textInputAction: TextInputAction.done,
-          onSubmitted: (value) {
+          onChanged: (value) {
+            inputTitle = value;
+          },
+          onFieldSubmitted: (value){
             final trimmed = value.trim();
-            if (trimmed.isNotEmpty) {
+            if(trimmed.isNotEmpty){
               Navigator.of(dialogContext).pop(trimmed);
             }
           },
@@ -122,7 +125,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
           FilledButton(
             onPressed: () {
-              final value = textController.text.trim();
+              final value = inputTitle.trim();
               if (value.isNotEmpty) {
                 Navigator.of(dialogContext).pop(value);
               }
@@ -133,7 +136,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       ),
     );
 
-    textController.dispose();
     if (title == null || !mounted) return;
 
     final controller = ref.read(taskControllerProvider);
