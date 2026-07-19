@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "634982029029",
+    "project_id": "calendar-todo-o2c30q",
+    "storage_bucket": "calendar-todo-o2c30q.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:634982029029:android:7b03da1f44dd07ab55660c",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdHww7ZTlYBFODz-wGuVjEQo04ac6-CAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
