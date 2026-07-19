@@ -33,6 +33,13 @@ class AuthService {
 
   Future<void> signOut() => _auth.signOut();
 
+  /// パスワードリセットメールを送信する。           
+  Future<void> sendPasswordReset({required String
+  email}) {
+    return _auth.sendPasswordResetEmail(email:
+  email.trim());
+  }
+
   /// FirebaseAuthException を日本語メッセージに変換する。
   static String describeError(Object error) {
     if (error is FirebaseAuthException) {
