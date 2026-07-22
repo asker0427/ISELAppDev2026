@@ -93,6 +93,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       String initialTitle = '',
   }) async {
 
+    initialTitle = task.title;
+
     var inputTitle = initialTitle;
     
     final title = await showDialog<String>(
@@ -148,6 +150,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       String initialMemo = '',
   }) async {
 
+    initialMemo = task.notes;
+
     var inputMemo = initialMemo;
     
     final memo = await showDialog<String>(
@@ -194,7 +198,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     if (memo == null || !mounted) return;
 
     final controller = ref.read(taskControllerProvider);
-    await controller.updateTaskName(task, memo);
+    await controller.updateTaskMemo(task, memo);
      
   }
 
@@ -332,12 +336,30 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ),
                 ),
               ),
+
+              IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: 'タスク名を編集',
+                onPressed: () => _showTaskDialog(task),
+              )
             ],
           ),
-          if (task.notes.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(task.notes, style: theme.textTheme.bodyMedium),
-          ],
+          Wrap(
+
+            children: [
+
+              if(task.notes.isNotEmpty)Text(task.notes, style: theme.textTheme.bodyMedium),
+            
+              IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: 'メモを編集',
+                onPressed: () => _showNoteDialog(task),
+              )
+            ]
+
+            
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
