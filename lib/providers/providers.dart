@@ -133,6 +133,20 @@ class TaskController {
     return _fs.updateTask(task.copyWith(subtasks: updated));
   }
 
+  /// タスクの名前を変更する.
+  Future<void> updateTaskName(Task task, String newtaskname){
+    final trimmed = newtaskname.trim();
+    if(trimmed.isEmpty) return Future.value();
+    return _fs.updateTask(task.copyWith(title: newtaskname));
+  }
+
+  Future<void> updateTaskMemo(Task task, String newNote){
+    final trimmed = newNote.trim();
+    if(trimmed.isEmpty) return Future.value();
+
+    return _fs.updateTask(task.copyWith(notes: newNote));
+  }
+
   /// サブタスクを削除して保存する。
   Future<void> deleteSubtask(Task task, String subtaskId) {
     final updated = task.subtasks.where((s) => s.id != subtaskId).toList();
