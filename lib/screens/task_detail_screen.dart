@@ -88,6 +88,124 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }
   }
 
+  Future<void> _showTaskDialog(
+    Task task, {
+      String initialTitle = '',
+  }) async {
+
+    initialTitle = task.title;
+
+    var inputTitle = initialTitle;
+    
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('タスク名を変更'),
+        content: TextFormField(
+          initialValue: initialTitle,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'タスク名',
+            border: OutlineInputBorder(),
+          ),
+          textInputAction: TextInputAction.done,
+          onChanged: (value){
+            inputTitle = value;
+          },
+
+          onFieldSubmitted: (value){
+            final trimmed = value.trim();
+            if(trimmed.isNotEmpty){
+              Navigator.of(dialogContext).pop(trimmed);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = inputTitle.trim();
+              if (value.isNotEmpty) {
+                Navigator.of(dialogContext).pop(value);
+              }
+            },
+            child: Text('変更'),
+          ),
+        ],
+      ),
+    );
+
+    if (title == null || !mounted) return;
+
+    final controller = ref.read(taskControllerProvider);
+    await controller.updateTaskName(task, title);
+     
+  }
+
+  Future<void> _showNoteDialog(
+    Task task, {
+      String initialMemo = '',
+  }) async {
+
+    initialMemo = task.notes;
+
+    var inputMemo = initialMemo;
+    
+    final memo = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('メモを変更'),
+        content: TextFormField(
+          initialValue: initialMemo,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'メモの内容',
+            border: OutlineInputBorder(),
+          ),
+          textInputAction: TextInputAction.done,
+          onChanged: (value){
+            inputMemo = value;
+          },
+
+          onFieldSubmitted: (value){
+            final trimmed = value.trim();
+            if(trimmed.isNotEmpty){
+              Navigator.of(dialogContext).pop(trimmed);
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = inputMemo.trim();
+              if (value.isNotEmpty) {
+                Navigator.of(dialogContext).pop(value);
+              }
+            },
+            child: Text('変更'),
+          ),
+        ],
+      ),
+    );
+
+    if (memo == null || !mounted) return;
+
+    final controller = ref.read(taskControllerProvider);
+    await controller.updateTaskMemo(task, memo);
+     
+  }
+
+
+
+
+
   Future<void> _showSubtaskDialog(
     Task task, {
     String? subtaskId,
@@ -218,12 +336,30 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ),
                 ),
               ),
+
+              IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: 'タスク名を編集',
+                onPressed: () => _showTaskDialog(task),
+              )
             ],
           ),
-          if (task.notes.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(task.notes, style: theme.textTheme.bodyMedium),
-          ],
+          Wrap(
+
+            children: [
+
+              if(task.notes.isNotEmpty)Text(task.notes, style: theme.textTheme.bodyMedium),
+            
+              IconButton(
+                icon: const Icon(Icons.edit),
+                tooltip: 'メモを編集',
+                onPressed: () => _showNoteDialog(task),
+              )
+            ]
+
+            
+          ),
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
