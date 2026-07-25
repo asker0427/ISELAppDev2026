@@ -9,6 +9,8 @@ import '../widgets/task_tile.dart';
 import 'add_task_screen.dart';
 import 'task_detail_screen.dart';
 
+
+
 /// メイン画面：カレンダー + 選択日のタスク一覧。
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -107,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       itemCount: dayTasks.length,
                       itemBuilder: (context, i) {
                         final task = dayTasks[i];
-                        return TaskTile(
+                          return TaskTile(
                           task: task,
                           onToggleDone: (v) => ref
                               .read(taskControllerProvider)

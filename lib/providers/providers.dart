@@ -74,7 +74,29 @@ final tasksForSelectedDayProvider = Provider<List<Task>>((ref) {
   final selected = ref.watch(selectedDayProvider);
   final byDay = ref.watch(tasksByDayProvider);
   final key = DateTime(selected.year, selected.month, selected.day);
-  return byDay[key] ?? const [];
+
+  // 元のリストを変更しないようコピーする
+  final tasks = [...(byDay[key] ?? const <Task>[])];
+
+  tasks.sort((a, b) {
+    // 未完了(false)を先、完了(true)を後にする
+    final doneComparison = a.done == b.done
+        ? 0
+        : (a.done ? 1 : -1);
+
+    if (doneComparison != 0) return doneComparison;
+
+    // 同じ完了状態なら、高 → 中 → 低
+    final priorityComparison =
+        b.priority.index.compareTo(a.priority.index);
+
+    if (priorityComparison != 0) return priorityComparison;
+
+    // 優先度も同じなら新しいタスクを先にする
+    return b.createdAt.compareTo(a.createdAt);
+  });
+
+  return tasks;
 });
 
 // ---- タスク操作（Controller） ----

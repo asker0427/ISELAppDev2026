@@ -23,6 +23,9 @@ class TaskTile extends StatelessWidget {
     final hasSubtasks = task.subtasks.isNotEmpty;
 
     return Card(
+      color: task.done
+        ? Colors.grey.shade500
+        : null,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: InkWell(
         onTap: onTap,
