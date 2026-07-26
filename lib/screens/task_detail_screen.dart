@@ -331,9 +331,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               Expanded(
                 child: Text(
                   task.title,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    decoration: task.done ? TextDecoration.lineThrough : null,
-                  ),
                 ),
               ),
 
