@@ -95,8 +95,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   markersMaxCount: 4,
                 ),
                 headerStyle: const HeaderStyle(
-                  formatButtonShowsNext: false,
-                  titleCentered: true,
+                  formatButtonVisible: false,
+                  titleCentered: false,
+                ),
+                calendarBuilders: CalendarBuilders<Task>(
+                  headerTitleBuilder: (context, day) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              DateFormat('yyyy年 M月', 'ja').format(day),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<CalendarFormat>(
+                            value: _format,
+                            isDense: true,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            iconEnabledColor: theme.colorScheme.onSurface,
+                            items: const [
+                              DropdownMenuItem(
+                                value: CalendarFormat.month,
+                                child: Text('月'),
+                              ),
+                              DropdownMenuItem(
+                                value: CalendarFormat.twoWeeks,
+                                child: Text('2週'),
+                              ),
+                              DropdownMenuItem(
+                                value: CalendarFormat.week,
+                                child: Text('週'),
+                              ),
+                            ],
+                            onChanged: (f) {
+                              if (f != null) setState(() => _format = f);
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

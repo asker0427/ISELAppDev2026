@@ -22,10 +22,15 @@ class TaskTile extends StatelessWidget {
     final due = task.dueDate;
     final hasSubtasks = task.subtasks.isNotEmpty;
 
-    return Card(
-      color: task.done
-        ? Colors.grey.shade500
-        : null,
+    final cardColor = task.done
+        ? const Color.fromARGB(255, 216, 216, 216)
+        : theme.cardTheme.color;
+
+    return Theme(
+      data: theme.copyWith(
+        cardTheme: theme.cardTheme.copyWith(color: cardColor),
+      ),
+      child: Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: InkWell(
         onTap: onTap,
@@ -46,9 +51,6 @@ class TaskTile extends StatelessWidget {
                     Text(
                       task.title,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        decoration: task.done
-                            ? TextDecoration.lineThrough
-                            : null,
                         color: task.done
                             ? theme.colorScheme.onSurfaceVariant
                             : null,
@@ -106,6 +108,7 @@ class TaskTile extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
