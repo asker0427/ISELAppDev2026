@@ -1,1 +1,21 @@
-{ "indexes": [], "fieldOverrides": [] }
+{
+  "indexes": [
+    {
+      "collectionGroup": "tasks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "done", "order": "ASCENDING"},
+        {"fieldPath": "dueDate", "order": "ASCENDING"}
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "settings",
+      "fieldPath": "enabled",
+      "indexes": [
+        {"order": "ASCENDING", "queryScope": "COLLECTION_GROUP"}
+      ]
+    }
+  ]
+}

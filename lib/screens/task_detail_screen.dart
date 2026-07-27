@@ -16,6 +16,7 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
+
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   bool _generating = false;
 

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/task.dart';
+import '../models/notification_settings.dart';
 
 /// Firestore のタスク永続化ラッパー。
 ///
@@ -14,6 +15,12 @@ class FirestoreService {
 
   CollectionReference<Map<String, dynamic>> get _tasks =>
       _db.collection('users').doc(uid).collection('tasks');
+
+  DocumentReference<Map<String, dynamic>> get _notificationSettings => _db
+      .collection('users')
+      .doc(uid)
+      .collection('settings')
+      .doc('notifications');
 
   /// タスク一覧をリアルタイム購読する（作成日時の降順）。
   Stream<List<Task>> watchTasks() {
@@ -38,5 +45,15 @@ class FirestoreService {
 
   Future<void> setDone(String taskId, bool done) {
     return _tasks.doc(taskId).update({'done': done});
+  }
+
+  Stream<TaskNotificationSettings> watchNotificationSettings() {
+    return _notificationSettings.snapshots().map(
+      (doc) => TaskNotificationSettings.fromMap(doc.data()),
+    );
+  }
+
+  Future<void> updateNotificationSettings(TaskNotificationSettings settings) {
+    return _notificationSettings.set(settings.toMap(), SetOptions(merge: true));
   }
 }

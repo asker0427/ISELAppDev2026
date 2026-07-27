@@ -45,3 +45,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android generated build files
+/android/build/
+
+# Firebase CLI cache
+/.firebase/

@@ -5,11 +5,11 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../models/task.dart';
 import '../providers/providers.dart';
+import '../services/fcm_service.dart';
 import '../widgets/task_tile.dart';
 import 'add_task_screen.dart';
 import 'task_detail_screen.dart';
-
-
+import 'notification_settings_screen.dart';
 
 /// メイン画面：カレンダー + 選択日のタスク一覧。
 class HomeScreen extends ConsumerStatefulWidget {
@@ -36,9 +36,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('カレンダー TODO'),
         actions: [
           IconButton(
+            tooltip: '通知設定',
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const NotificationSettingsScreen(),
+              ),
+            ),
+          ),
+          IconButton(
             tooltip: 'ログアウト',
             icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authServiceProvider).signOut(),
+            onPressed: () async {
+              await FcmService.instance.unregister();
+              await ref.read(authServiceProvider).signOut();
+            },
           ),
         ],
       ),
@@ -47,8 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         error: (e, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('タスクの読み込みに失敗しました:\n$e',
-                textAlign: TextAlign.center),
+            child: Text('タスクの読み込みに失敗しました:\n$e', textAlign: TextAlign.center),
           ),
         ),
         data: (_) => Column(
@@ -66,15 +77,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   CalendarFormat.twoWeeks: '2週',
                   CalendarFormat.week: '週',
                 },
-                selectedDayPredicate: (day) =>
-                    isSameDay(selectedDay, day),
+                selectedDayPredicate: (day) => isSameDay(selectedDay, day),
                 eventLoader: (day) {
                   final key = DateTime(day.year, day.month, day.day);
                   return tasksByDay[key] ?? const [];
                 },
                 onDaySelected: (selected, focused) {
                   ref.read(selectedDayProvider.notifier).state = DateTime(
-                      selected.year, selected.month, selected.day);
+                    selected.year,
+                    selected.month,
+                    selected.day,
+                  );
                   setState(() => _focusedDay = focused);
                 },
                 onFormatChanged: (f) => setState(() => _format = f),
@@ -154,15 +167,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       itemCount: dayTasks.length,
                       itemBuilder: (context, i) {
                         final task = dayTasks[i];
-                          return TaskTile(
+                        return TaskTile(
                           task: task,
                           onToggleDone: (v) => ref
                               .read(taskControllerProvider)
                               .setDone(task.id, v),
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  TaskDetailScreen(taskId: task.id),
+                              builder: (_) => TaskDetailScreen(taskId: task.id),
                             ),
                           ),
                         );
@@ -199,14 +211,17 @@ class _DayHeader extends StatelessWidget {
         children: [
           Text(
             DateFormat('M月d日 (E)', 'ja').format(day),
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(width: 8),
-          Text('$count 件',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              )),
+          Text(
+            '$count 件',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
@@ -224,13 +239,18 @@ class _EmptyDay extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.event_available,
-              size: 48, color: theme.colorScheme.onSurfaceVariant),
+          Icon(
+            Icons.event_available,
+            size: 48,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(height: 12),
-          Text('この日のタスクはありません',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              )),
+          Text(
+            'この日のタスクはありません',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );

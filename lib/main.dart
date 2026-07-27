@@ -6,6 +6,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app.dart';
 import 'firebase_options.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'services/notification_service.dart';
+import 'services/fcm_service.dart';
+
+Future<void> initializeNotifications() async {
+  await TaskNotificationService(taskNotificationsPlugin).initialize();
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,19 +30,23 @@ Future<void> main() async {
       firebaseReady = true;
 
       final remoteConfig = FirebaseRemoteConfig.instance;
-      await remoteConfig.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(seconds: 10),
-        minimumFetchInterval: const Duration(hours: 1),
-      ));
+      await remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(seconds: 10),
+          minimumFetchInterval: const Duration(hours: 1),
+        ),
+      );
       await remoteConfig.fetchAndActivate();
     } catch (e, st) {
       debugPrint('Firebase 初期化に失敗しました: $e\n$st');
     }
   }
 
-  runApp(
-    ProviderScope(
-      child: TodoApp(firebaseReady: firebaseReady),
-    ),
-  );
+  /// 通知機能の初期化。
+  await initializeNotifications();
+  if (firebaseReady) {
+    await FcmService.instance.initialize();
+  }
+
+  runApp(ProviderScope(child: TodoApp(firebaseReady: firebaseReady)));
 }
