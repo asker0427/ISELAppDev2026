@@ -10,6 +10,7 @@ Gemini による AI サブタスク分割・音声入力に対応しています
 - 🌲 **サブタスク** — 進捗バー付き。個別にチェック可能
 - 🔐 **ログイン** — Firebase Authentication（メール/パスワード）
 - ☁️ **データ同期** — Cloud Firestore にユーザー単位で永続化・リアルタイム反映
+- 🔔 **デイリー通知** — 朝は本日締切、昼は7日以内の優先タスクをFCMで通知
 - ✨ **AI サブタスク分割** — Gemini がタスクを実行手順に自動分割
 - 🎤 **音声入力** — 話した内容を音声認識し、Gemini がタスク名・期限に整形
 
@@ -105,6 +106,25 @@ flutter run --dart-define=GEMINI_API_KEY=あなたのキー
 
 VS Code を使う場合は `.vscode/launch.json` の `args` に
 `--dart-define=GEMINI_API_KEY=...` を追加すると便利です。
+
+### 5. タスク通知（FCM + Scheduled Functions）
+
+Cloud Functions と Firestore の設定をデプロイします。Scheduled Functions の利用には
+Firebase プロジェクトを Blaze プランへ変更し、Cloud Scheduler API を有効にする必要があります。
+
+```bash
+cd functions
+npm install
+npm run build
+cd ..
+firebase deploy --only functions,firestore:rules,firestore:indexes
+```
+
+Functions は1分ごと（`Asia/Tokyo`）に実行され、各ユーザーの通知設定時刻に一致した場合だけ
+FCMを送信します。設定画面では朝・昼それぞれの時刻と表示件数（1〜20件）を変更できます。
+
+iOS実機で受信するには、Firebase ConsoleにAPNs認証キーを登録し、XcodeのRunnerターゲットで
+「Push Notifications」Capabilityを有効にしてください。Androidでは追加の操作は不要です。
 
 ---
 

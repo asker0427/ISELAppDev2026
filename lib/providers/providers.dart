@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/legacy.dart'; // StateProvider (Riverpod 3.x)
 
 import '../models/subtask.dart';
 import '../models/task.dart';
+import '../models/notification_settings.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../services/gemini_service.dart';
@@ -48,6 +49,30 @@ final tasksProvider = StreamProvider<List<Task>>((ref) {
   return fs.watchTasks();
 });
 
+final notificationSettingsProvider = StreamProvider<TaskNotificationSettings>((
+  ref,
+) {
+  final fs = ref.watch(firestoreServiceProvider);
+  if (fs == null) return Stream.value(const TaskNotificationSettings());
+  return fs.watchNotificationSettings();
+});
+
+final notificationSettingsControllerProvider =
+    Provider<NotificationSettingsController>((ref) {
+      return NotificationSettingsController(ref);
+    });
+
+class NotificationSettingsController {
+  NotificationSettingsController(this._ref);
+  final Ref _ref;
+
+  Future<void> save(TaskNotificationSettings settings) async {
+    final fs = _ref.read(firestoreServiceProvider);
+    if (fs == null) throw StateError('ログインしていません。');
+    await fs.updateNotificationSettings(settings);
+  }
+}
+
 // ---- カレンダー選択日 ----
 
 /// カレンダーで選択中の日付（時刻は無視して日付単位で扱う）。
@@ -80,15 +105,12 @@ final tasksForSelectedDayProvider = Provider<List<Task>>((ref) {
 
   tasks.sort((a, b) {
     // 未完了(false)を先、完了(true)を後にする
-    final doneComparison = a.done == b.done
-        ? 0
-        : (a.done ? 1 : -1);
+    final doneComparison = a.done == b.done ? 0 : (a.done ? 1 : -1);
 
     if (doneComparison != 0) return doneComparison;
 
     // 同じ完了状態なら、高 → 中 → 低
-    final priorityComparison =
-        b.priority.index.compareTo(a.priority.index);
+    final priorityComparison = b.priority.index.compareTo(a.priority.index);
 
     if (priorityComparison != 0) return priorityComparison;
 
@@ -156,15 +178,15 @@ class TaskController {
   }
 
   /// タスクの名前を変更する.
-  Future<void> updateTaskName(Task task, String newtaskname){
+  Future<void> updateTaskName(Task task, String newtaskname) {
     final trimmed = newtaskname.trim();
-    if(trimmed.isEmpty) return Future.value();
+    if (trimmed.isEmpty) return Future.value();
     return _fs.updateTask(task.copyWith(title: newtaskname));
   }
 
-  Future<void> updateTaskMemo(Task task, String newNote){
+  Future<void> updateTaskMemo(Task task, String newNote) {
     final trimmed = newNote.trim();
-    if(trimmed.isEmpty) return Future.value();
+    if (trimmed.isEmpty) return Future.value();
 
     return _fs.updateTask(task.copyWith(notes: newNote));
   }
