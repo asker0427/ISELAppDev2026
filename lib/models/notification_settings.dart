@@ -48,6 +48,12 @@ class TaskNotificationSettings {
     'noonHour': noonHour,
     'noonMinute': noonMinute,
     'weekLimit': weekLimit,
+    'notifySlots': enabled
+        ? [
+            _notificationSlot('m', morningHour, morningMinute),
+            _notificationSlot('n', noonHour, noonMinute),
+          ]
+        : <String>[],
     'updatedAt': FieldValue.serverTimestamp(),
   };
 
@@ -65,4 +71,10 @@ class TaskNotificationSettings {
       weekLimit: integer('weekLimit', 5).clamp(1, 20),
     );
   }
+}
+
+String _notificationSlot(String prefix, int hour, int minute) {
+  final paddedHour = hour.toString().padLeft(2, '0');
+  final paddedMinute = minute.toString().padLeft(2, '0');
+  return '$prefix$paddedHour:$paddedMinute';
 }

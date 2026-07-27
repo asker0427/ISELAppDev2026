@@ -36,7 +36,7 @@ interface LocalTime {
 }
 
 /**
- * Runs every minute so each user can choose an arbitrary morning/noon time.
+ * Runs every minute and reads only settings indexed for the current time.
  * The scheduler itself and all date boundaries use Japan time.
  */
 export const sendDailyTaskNotifications = onSchedule(
@@ -55,9 +55,16 @@ export const sendDailyTaskNotifications = onSchedule(
       localTime: now,
     });
     const db = getFirestore();
+    const timeKey = `${pad(now.hour)}:${pad(now.minute)}`;
+    const morningSlot = `m${timeKey}`;
+    const noonSlot = `n${timeKey}`;
     const settings = await db
       .collectionGroup("settings")
-      .where("enabled", "==", true)
+      .where(
+        "notifySlots",
+        "array-contains-any",
+        [morningSlot, noonSlot],
+      )
       .get();
 
     const work: Array<() => Promise<void>> = [];
@@ -66,17 +73,13 @@ export const sendDailyTaskNotifications = onSchedule(
       const value = document.data() as NotificationSettings;
       const uid = document.ref.parent.parent?.id;
       if (!uid) continue;
+      const slots = document.get("notifySlots");
+      if (!Array.isArray(slots)) continue;
 
-      if (
-        integer(value.morningHour, 8) === now.hour &&
-        integer(value.morningMinute, 0) === now.minute
-      ) {
+      if (slots.includes(morningSlot)) {
         work.push(() => sendUserSummary(db, uid, value, "morning", now));
       }
-      if (
-        integer(value.noonHour, 12) === now.hour &&
-        integer(value.noonMinute, 0) === now.minute
-      ) {
+      if (slots.includes(noonSlot)) {
         work.push(() => sendUserSummary(db, uid, value, "noon", now));
       }
     }
